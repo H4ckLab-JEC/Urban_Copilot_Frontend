@@ -1,6 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import DashboardHeader from "../components/DashboardHeader.astro";
+
+const baseUrl = process.env.PUBLIC_API_URL || 'https://urban-copilot-ai-161673370619.northamerica-south1.run.app';
 ---
 
 <Layout title="Centro de Reportes - Urban Copilot">
@@ -86,7 +88,9 @@ import DashboardHeader from "../components/DashboardHeader.astro";
   @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 </style>
 
+<script is:inline define:vars={{ baseUrl }}></script>
 <script is:inline>
+  const API_URL = window.baseUrl || 'https://urban-copilot-ai-161673370619.northamerica-south1.run.app';
   let reportData = { category: "", system: "", station: "", description: "", location: "" };
   let step = 0;
   let isListening = false;
@@ -266,7 +270,7 @@ import DashboardHeader from "../components/DashboardHeader.astro";
 
   async function loadReports() {
     try {
-      const r = await fetch('/api/v1/reports');
+      const r = await fetch(`${API_URL}/api/v1/reports`);
       const data = await r.json();
       reportsList.innerHTML = data.reverse().map(rep => `
         <div class="p-3 bg-slate-950/50 rounded-lg border border-slate-800 text-[10px] mb-3 border-l-2 border-l-emerald-500">
@@ -306,7 +310,7 @@ import DashboardHeader from "../components/DashboardHeader.astro";
         } catch (e) {}
       }
 
-      await fetch('/api/v1/reports', {
+      await fetch(`${API_URL}/api/v1/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -69,6 +69,8 @@ const transports = [
     stations: true,
   },
 ];
+
+const baseUrl = process.env.PUBLIC_API_URL || 'https://urban-copilot-ai-161673370619.northamerica-south1.run.app';
 ---
 
 <Layout title="Tablero de Movilidad - Urban Copilot">
@@ -132,7 +134,9 @@ const transports = [
 <script is:inline src="/leaflet.js"></script>
 <link rel="stylesheet" href="/leaflet.css" />
 
+<script is:inline define:vars={{ baseUrl }}></script>
 <script is:inline>
+  const API_URL = window.baseUrl || 'https://urban-copilot-ai-161673370619.northamerica-south1.run.app';
   document.addEventListener("DOMContentLoaded", () => {
     // === CONFIGURACIÓN BASE DEL MAPA ===
     const map = L.map("master-map", {
@@ -445,7 +449,7 @@ const transports = [
           return;
         }
 
-        const res = await fetch("/api/v1/occupancy/predict", {
+        const res = await fetch(`${API_URL}/api/v1/occupancy/predict`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -543,7 +547,7 @@ const transports = [
     };
 
     const loadReports = async () => {
-      const res = await fetch("/api/v1/reports");
+      const res = await fetch(`${API_URL}/api/v1/reports`);
       const data = await res.json();
       const container = document.getElementById("side-alerts-box");
       const badge = document.getElementById("alerts-badge");
