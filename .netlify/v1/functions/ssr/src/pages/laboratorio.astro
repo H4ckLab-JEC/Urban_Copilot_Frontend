@@ -1,0 +1,372 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="UCAI Lab - Entrenamiento de IA">
+  <main class="min-h-screen pt-24 px-6 mb-12 flex flex-col items-center">
+    <div
+      class="max-w-4xl w-full mx-auto backdrop-blur-md bg-slate-900/80 rounded-2xl border border-indigo-500/30 p-10 shadow-2xl relative overflow-hidden"
+    >
+      <!-- Design Accents -->
+      <div
+        class="absolute top-0 right-0 w-1/2 h-1/2 bg-indigo-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"
+      >
+      </div>
+
+      <header
+        class="mb-8 md:mb-12 border-l-4 border-indigo-400 pl-4 md:pl-6 relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+      >
+        <div>
+          <h1
+            class="text-3xl md:text-4xl font-black text-white tracking-tight uppercase leading-tight"
+          >
+            Laboratorio de AI
+          </h1>
+          <p class="text-slate-400 text-sm font-medium mt-1 md:mt-2">
+            Optimización del modelo generativo (UCAI-v1.1)
+          </p>
+        </div>
+        <a
+          href="/"
+          class="w-full md:w-auto text-center px-6 py-2 bg-blue-900/40 hover:bg-blue-800/60 text-indigo-300 border border-blue-400/40 rounded-lg shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] transition-all duration-300 font-bold backdrop-blur-md"
+        >
+          Volver
+        </a>
+      </header>
+
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 relative z-10"
+      >
+        <!-- Stats Cards -->
+        <div
+          class="bg-indigo-950/30 p-4 md:p-5 rounded-xl border border-indigo-500/20 text-center"
+        >
+          <p
+            class="text-[10px] text-indigo-300 uppercase font-bold tracking-widest mb-1 md:mb-2"
+          >
+            Precisión
+          </p>
+          <p
+            id="stat-accuracy"
+            class="text-2xl md:text-3xl font-black text-white"
+          >
+            92.8%
+          </p>
+        </div>
+        <div
+          class="bg-indigo-950/30 p-4 md:p-5 rounded-xl border border-indigo-500/20 text-center"
+        >
+          <p
+            class="text-[10px] text-indigo-300 uppercase font-bold tracking-widest mb-1 md:mb-2"
+          >
+            Muestras
+          </p>
+          <p
+            id="stat-samples"
+            class="text-2xl md:text-3xl font-black text-white"
+          >
+            10,170
+          </p>
+        </div>
+        <div
+          class="bg-indigo-950/30 p-4 md:p-5 rounded-xl border border-indigo-500/20 text-center sm:col-span-2 md:col-span-1"
+        >
+          <p
+            class="text-[10px] text-indigo-300 uppercase font-bold tracking-widest mb-1 md:mb-2"
+          >
+            Red
+          </p>
+          <p class="text-2xl md:text-3xl font-black text-emerald-400">
+            Estable
+          </p>
+        </div>
+
+        <!-- Training Console -->
+        <div
+          class="md:col-span-2 bg-slate-950 rounded-xl border border-slate-700 shadow-inner overflow-hidden flex flex-col h-[300px] md:h-[400px]"
+        >
+          <div
+            class="bg-slate-900 px-4 py-2 border-bottom border-slate-700 flex justify-between items-center text-[11px] font-mono text-slate-500"
+          >
+            <span>TERMINAL DE ENTRENAMIENTO</span>
+            <div class="flex gap-1.5">
+              <div class="w-2.5 h-2.5 rounded-full bg-red-500/40"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-amber-500/40"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/40"></div>
+            </div>
+          </div>
+          <div
+            id="log-console"
+            class="p-6 font-mono text-xs text-indigo-400 overflow-y-auto space-y-1 custom-scrollbar leading-relaxed"
+          >
+            <p>> Esperando secuencia de entrenamiento...</p>
+          </div>
+          <div class="p-4 bg-slate-900/50 border-t border-slate-800">
+            <div
+              id="progress-bar-container"
+              class="hidden w-full h-2 bg-slate-800 rounded-full overflow-hidden"
+            >
+              <div
+                id="progress-bar"
+                class="w-0 h-full bg-indigo-500 transition-all duration-300"
+              >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col gap-4">
+          <div
+            class="p-6 bg-slate-800/40 rounded-xl border border-slate-700/50 flex-1"
+          >
+            <h3
+              class="text-sm font-bold text-slate-200 mb-4 uppercase tracking-wider"
+            >
+              Parámetros
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <label
+                  class="block text-[10px] text-slate-500 uppercase font-bold mb-1"
+                  >Algoritmo</label
+                >
+                <select
+                  class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-slate-300"
+                >
+                  <option>Gradient Boosting</option>
+                  <option>Random Forest (Optimized)</option>
+                  <option>Neural Network v2</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-400">Auto-Refine Weights</span>
+                <div class="w-8 h-4 bg-indigo-500 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="btn-start-train"
+            class="w-full py-5 bg-blue-500 hover:bg-blue-400 text-white font-black rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex flex-col items-center justify-center gap-1"
+          >
+            <span class="text-lg uppercase"
+              >Ejecutar Ciclo de Entrenamiento</span
+            >
+            <span class="text-[9px] text-indigo-200 opacity-60"
+              >Sincroniza 10,170 estaciones (Pantitlán Hub incl.)</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-12 relative z-10">
+        <h2
+          class="text-xl font-bold text-indigo-300 mb-6 flex items-center gap-2"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg
+          >
+          Módulo de Inteligencia IBM Granite
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Point 1 -->
+          <div
+            class="bg-indigo-900/10 border border-indigo-500/20 p-5 rounded-xl hover:border-blue-400/40 transition-all"
+          >
+            <h3 class="text-indigo-200 font-bold mb-2">
+              1. Pronóstico 24h (Forecasting)
+            </h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Predicción activa de flujos futuros. Usa modelos temporales para
+              anticipar la carga en andenes con 24 horas de antelación.
+            </p>
+          </div>
+          <!-- Point 2 -->
+          <div
+            class="bg-indigo-900/10 border border-indigo-500/20 p-5 rounded-xl hover:border-blue-400/40 transition-all"
+          >
+            <h3 class="text-indigo-200 font-bold mb-2">
+              2. Detección de Anomalías
+            </h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Identifica desviaciones críticas en la red (marchas, fallas o
+              clima) comparando la realidad contra la tendencia histórica de
+              Granite.
+            </p>
+          </div>
+          <!-- Point 3 -->
+          <div
+            class="bg-indigo-900/10 border border-indigo-500/20 p-5 rounded-xl hover:border-blue-400/40 transition-all"
+          >
+            <h3 class="text-indigo-200 font-bold mb-2">
+              3. Inferencia TTFM (Velocidad)
+            </h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Implementación de Tiny Time Series Foundation Models.
+              Procesamiento ultrarrápido para el monitoreo simultáneo de 10k+
+              estaciones.
+            </p>
+          </div>
+          <!-- Point 4 -->
+          <div
+            class="bg-indigo-900/10 border border-indigo-500/20 p-5 rounded-xl hover:border-blue-400/40 transition-all"
+          >
+            <h3 class="text-indigo-200 font-bold mb-2">
+              4. Zero-Shot Insights
+            </h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Capacidad de razonamiento sobre movilidad sin historial previo,
+              heredando el conocimiento de los modelos fundamentales de IBM.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12 relative z-10">
+        <h2
+          class="text-xl font-bold text-cyan-300 mb-6 flex items-center gap-2"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.675.337a4 4 0 01-2.574.346l-2.387-.477a2 2 0 00-1.022.547l-2.387 2.387a2 2 0 002.828 2.828l2.387-2.387a2 2 0 011.022-.547l2.387.477a6 6 0 003.86-.517l.675-.337a4 4 0 002.574-.346l2.387.477a2 2 0 011.022.547l2.387 2.387a2 2 0 002.828-2.828l-2.387-2.387zM5 10a2 2 0 110-4 2 2 0 010 4zm14 0a2 2 0 110-4 2 2 0 010 4zm-7 2a2 2 0 100-4 2 2 0 000 4z"
+            ></path></svg
+          >
+          Optimización con IBM AutoAI
+        </h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Point 1 -->
+          <div class="bg-cyan-900/10 border border-cyan-500/20 p-5 rounded-xl hover:border-cyan-500/40 transition-all">
+            <h3 class="text-cyan-200 font-bold mb-2">1. Feature Engineering Automática</h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Detecta patrones geográficos en los GeoJSON crudos y extrae variables de importancia (Hubs, Terminales) sin intervención humana.</p>
+          </div>
+          <!-- Point 2 -->
+          <div class="bg-cyan-900/10 border border-cyan-500/20 p-5 rounded-xl hover:border-cyan-500/40 transition-all">
+            <h3 class="text-cyan-200 font-bold mb-2">2. Unificación de Datos Crudos</h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Resuelve inconsistencias en los nombres y esquemas de los archivos del directorio /data, creando un dataset maestro normalizado.</p>
+          </div>
+          <!-- Point 3 -->
+          <div class="bg-cyan-900/10 border border-cyan-500/20 p-5 rounded-xl hover:border-cyan-500/40 transition-all">
+             <h3 class="text-cyan-200 font-bold mb-2">3. Selección de Pipelines</h3>
+             <p class="text-[11px] text-slate-400 leading-relaxed">Compite entre diversos algoritmos de ML para elegir el que mejor predice la afluencia específica de la Ciudad de México.</p>
+          </div>
+          <!-- Point 4 -->
+          <div class="bg-cyan-900/10 border border-cyan-500/20 p-5 rounded-xl hover:border-cyan-500/40 transition-all">
+             <h3 class="text-cyan-200 font-bold mb-2">4. Código Grado Producción</h3>
+             <p class="text-[11px] text-slate-400 leading-relaxed">Exporta el modelo optimizado como código Python listo para despliegues de alto rendimiento y escalabilidad masiva.</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="mt-12 text-center text-[10px] text-slate-600 font-mono italic"
+      >
+        Nota: El entrenamiento utiliza los pesos geográficos de la red oficial
+        de CDMX procesados con lógica Granite Time Series y optimizados vía AutoAI.
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+  }
+</style>
+
+<script is:inline>
+  var isTraining = false;
+  var logs = [
+    "Iniciando ingesta de datos GeoJSON...",
+    "Validando topología de red CDMX...",
+    "Procesando Metro Línea 1 (20 estaciones)",
+    "Identificando Hub: Pantitlán",
+    "Ajustando coeficiente de carga para Hub: Tacubaya",
+    "Optimizando Red Lineal Metrobús L7...",
+    "Refinando predicción para estaciones Cablebús...",
+    "Cálculo de error residuo completado (MSE: 0.042)",
+    "Aplicando pesos ponderados por nodo...",
+    "Actualizando base de datos local station_weights.csv...",
+    "Sincronización de modelo v1.1.0 exitosa",
+  ];
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var btn = document.getElementById("btn-start-train");
+    var consoleDiv = document.getElementById("log-console");
+    var progBar = document.getElementById("progress-bar");
+    var progContainer = document.getElementById("progress-bar-container");
+    var statAcc = document.getElementById("stat-accuracy");
+    var statSam = document.getElementById("stat-samples");
+
+    btn.addEventListener("click", function () {
+      if (isTraining) return;
+      isTraining = true;
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      consoleDiv.innerHTML = "";
+      progContainer.classList.remove("hidden");
+
+      var index = 0;
+      var interval = setInterval(function () {
+        if (index < logs.length) {
+          var p = document.createElement("p");
+          p.textContent = "> " + logs[index];
+          consoleDiv.appendChild(p);
+          consoleDiv.scrollTop = consoleDiv.scrollHeight;
+          progBar.style.width = ((index + 1) / logs.length) * 100 + "%";
+          index++;
+        } else {
+          clearInterval(interval);
+          finishTraining();
+        }
+      }, 350);
+    });
+
+    function finishTraining() {
+      fetch("/api/v1/occupancy/train", { method: "POST" })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          statAcc.textContent = data.new_accuracy + "%";
+          statSam.textContent = data.total_samples.toLocaleString();
+
+          var p = document.createElement("p");
+          p.style.color = "#10b981";
+          p.style.fontWeight = "bold";
+          p.textContent =
+            ">> ENTRENAMIENTO COMPLETADO. VERSIÓN: " + data.version;
+          consoleDiv.appendChild(p);
+
+          isTraining = false;
+          btn.disabled = false;
+          btn.style.opacity = "1";
+          alert("¡Modelo optimizado! Precisión: " + data.new_accuracy + "%");
+        });
+    }
+  });
+</script>

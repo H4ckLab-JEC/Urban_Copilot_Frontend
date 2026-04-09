@@ -1,0 +1,54 @@
+/* empty css                                 */
+import { f as createComponent, r as renderTemplate, j as renderComponent, m as maybeRenderHead } from '../chunks/astro/server_DXssHrC_.mjs';
+import 'kleur/colors';
+import 'html-escaper';
+import { $ as $$Layout } from '../chunks/Layout_DEmLSqtz.mjs';
+export { renderers } from '../renderers.mjs';
+
+var __freeze = Object.freeze;
+var __defProp = Object.defineProperty;
+var __template = (cooked, raw) => __freeze(__defProp(cooked, "raw", { value: __freeze(cooked.slice()) }));
+var _a;
+const $$Index = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate(_a || (_a = __template(["", ' <!-- Three.js y Globe.gl para Animaciones 3D --> <script src="https://unpkg.com/three@0.160.0/build/three.min.js"><\/script> <script src="https://unpkg.com/globe.gl@2.32.1/dist/globe.gl.min.js"><\/script> <script>\n  // Funci\xF3n para inicializar el globo de forma segura\n  const initGlobe = () => {\n    const globeContainer = document.getElementById("globeViz");\n    if (!globeContainer || typeof Globe === "undefined") {\n      console.warn("Globe.gl no est\xE1 disponible todav\xEDa, reintentando...");\n      setTimeout(initGlobe, 500);\n      return;\n    }\n\n    try {\n      const globe = Globe()(globeContainer)\n        .backgroundColor("rgba(0,0,0,0)")\n        .showGlobe(true)\n        .showAtmosphere(true)\n        .atmosphereColor("#38bdf8")\n        .atmosphereAltitude(0.2)\n        .globeImageUrl(\n          "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg",\n        );\n\n      globe.controls().autoRotate = true;\n      globe.controls().autoRotateSpeed = 0.8;\n      globe.controls().enableZoom = false;\n      globe.pointOfView({ lat: 20, lng: -95, altitude: 2.2 });\n\n      const resize = () => {\n        globe.width(window.innerWidth);\n        globe.height(window.innerHeight);\n      };\n      window.addEventListener("resize", resize);\n      resize();\n    } catch (e) {\n      console.error("Error al cargar el globo 3D:", e);\n    }\n  };\n\n  // Ejecutar cuando el DOM est\xE9 listo\n  if (document.readyState === "loading") {\n    document.addEventListener("DOMContentLoaded", initGlobe);\n  } else {\n    initGlobe();\n  }\n<\/script>'])), renderComponent($$result, "Layout", $$Layout, { "title": "Urban Copilot AI" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<main class="relative flex flex-col items-center justify-center min-h-screen pt-20 pb-16 px-6 overflow-hidden"> <!-- Contenedor del Globo 3D (Fondo) --> <div id="globeViz" class="fixed inset-0 z-0 opacity-50 pointer-events-none flex items-center justify-center"></div> <div class="container mx-auto max-w-6xl relative z-20 pointer-events-auto"> <!-- Hero Section --> <div class="text-center mb-20 pointer-events-auto"> <div class="inline-block py-1 px-3 rounded-full bg-blue-900/40 border border-blue-500/30 text-blue-300 text-sm font-semibold tracking-wider mb-6 shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+SISTEMA INTELIGENTE DE MOVILIDAD
+</div> <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-cyan-200 to-blue-500 drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+Urban Copilot AI
+</h1> <p class="text-lg md:text-2xl text-blue-100/70 max-w-2xl mx-auto font-light drop-shadow-md">
+Visualización en tiempo real y reportes inteligentes para transformar
+          la movilidad masiva en la CDMX mediante <strong class="text-cyan-300 font-medium">IA y validación geoespacial</strong>.
+</p> <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4"> <a href="/tablero" class="px-8 py-3 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-white border border-blue-400/30 font-bold transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center backdrop-blur-md">
+Monitor CDMX Live
+</a> <a href="/reportes" class="px-8 py-3 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-white border border-red-500/30 font-bold transition-all duration-300 shadow-[0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center backdrop-blur-md">
+Alertas Ciudadanas
+</a> </div> </div> <!-- Feature Cards --> <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10 pointer-events-auto"> <!-- Card 1 --> <div class="group bg-[#0B1736]/80 backdrop-blur-xl rounded-2xl p-8 border border-blue-800/50 hover:border-blue-400/50 transition-all duration-500 shadow-[0_8px_30px_rgba(0,0,0,0.7)] hover:shadow-[0_0_25px_rgba(56,189,248,0.2)] flex flex-col relative overflow-hidden"> <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-400/20 transition-all duration-500"></div> <div class="w-12 h-12 rounded-xl bg-blue-600/30 border border-blue-500/30 flex items-center justify-center mb-6 shadow-[0_0_10px_rgba(37,99,235,0.3)]"> <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> </div> <h2 class="text-2xl font-bold mb-3 text-blue-100">
+Monitor CDMX Live
+</h2> <p class="text-blue-100/80 leading-relaxed font-light">
+Visualiza incidentes validados en tiempo real sobre la
+            infraestructura oficial de Metro y Metrobús mediante nuestro mapa
+            geoespacial.
+</p> </div> <!-- Card 2 (Central: Predicción) --> <div class="group bg-[#0B1736]/80 backdrop-blur-xl rounded-2xl p-8 border border-cyan-800/50 hover:border-cyan-400/50 transition-all duration-500 shadow-[0_8px_30px_rgba(0,0,0,0.7)] hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] flex flex-col relative overflow-hidden transform md:-translate-y-4"> <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-400/20 transition-all duration-500"></div> <div class="w-12 h-12 rounded-xl bg-cyan-600/30 border border-cyan-500/30 flex items-center justify-center mb-6 shadow-[0_0_10px_rgba(6,182,212,0.3)]"> <svg class="w-6 h-6 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> </div> <h2 class="text-2xl font-bold mb-3 text-cyan-100">
+Predicción de Afluencia
+</h2> <p class="text-cyan-100/80 leading-relaxed font-light">
+Anticipa la densidad de usuarios en estaciones clave mediante
+            modelos de IA que analizan la saturación de la red.
+</p> </div> <!-- Card 3 (Derecha: Reportes) --> <div class="group bg-[#0B1736]/80 backdrop-blur-xl rounded-2xl p-8 border border-red-800/50 hover:border-red-500/50 transition-all duration-500 shadow-[0_8px_30px_rgba(0,0,0,0.7)] hover:shadow-[0_0_30px_rgba(239,68,68,0.2)] flex flex-col relative overflow-hidden"> <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-400/20 transition-all duration-500"></div> <div class="w-12 h-12 rounded-xl bg-red-600/30 border border-red-500/30 flex items-center justify-center mb-6 shadow-[0_0_10px_rgba(220,38,38,0.3)]"> <svg class="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg> </div> <h2 class="text-2xl font-bold mb-3 text-red-100">
+Reportes Propios
+</h2> <p class="text-red-100/80 leading-relaxed font-light">
+Generamos y persistimos nuestra propia base de datos de incidentes mediante aportaciones ciudadanas procesadas por IA.
+</p> </div> </div> </div> </main> ` }));
+}, "/Users/leonelmendiola/Urban_Copilot_Frontend/src/pages/index.astro", void 0);
+
+const $$file = "/Users/leonelmendiola/Urban_Copilot_Frontend/src/pages/index.astro";
+const $$url = "";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$Index,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };
