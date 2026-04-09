@@ -12,4 +12,7 @@ export default defineConfig({
       process.env.PUBLIC_API_URL || 'https://urban-copilot-ai-161673370619.northamerica-south1.run.app'
     ),
   },
+  scripts: {
+    build: "astro build"
+  }
 });
