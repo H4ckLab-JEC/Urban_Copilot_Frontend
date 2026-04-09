@@ -170,34 +170,46 @@ import Layout from "../layouts/Layout.astro";
 ></script>
 
 <script is:inline>
-  document.addEventListener("DOMContentLoaded", () => {
+  // Función para inicializar el globo de forma segura
+  const initGlobe = () => {
     const globeContainer = document.getElementById("globeViz");
-    if (!globeContainer || typeof Globe === "undefined") return;
+    if (!globeContainer || typeof Globe === "undefined") {
+      console.warn("Globe.gl no está disponible todavía, reintentando...");
+      setTimeout(initGlobe, 500);
+      return;
+    }
 
-    const globe = Globe()(globeContainer)
-      .backgroundColor("rgba(0,0,0,0)")
-      .showGlobe(true)
-      .showAtmosphere(true)
-      .atmosphereColor("#38bdf8")
-      .atmosphereAltitude(0.2)
-      .globeImageUrl(
-        "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg",
-      );
+    try {
+      const globe = Globe()(globeContainer)
+        .backgroundColor("rgba(0,0,0,0)")
+        .showGlobe(true)
+        .showAtmosphere(true)
+        .atmosphereColor("#38bdf8")
+        .atmosphereAltitude(0.2)
+        .globeImageUrl(
+          "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg",
+        );
 
-    // Configuración de vista y rotación automática
-    globe.controls().autoRotate = true;
-    globe.controls().autoRotateSpeed = 0.8;
-    globe.controls().enableZoom = false; // Desactiva scroll zoom para no interferir con la pagina
+      globe.controls().autoRotate = true;
+      globe.controls().autoRotateSpeed = 0.8;
+      globe.controls().enableZoom = false;
+      globe.pointOfView({ lat: 20, lng: -95, altitude: 2.2 });
 
-    // Posición inicial centrando el continente americano
-    globe.pointOfView({ lat: 20, lng: -95, altitude: 2.2 });
+      const resize = () => {
+        globe.width(window.innerWidth);
+        globe.height(window.innerHeight);
+      };
+      window.addEventListener("resize", resize);
+      resize();
+    } catch (e) {
+      console.error("Error al cargar el globo 3D:", e);
+    }
+  };
 
-    // Hacer dinámico el tamaño en resize
-    const resize = () => {
-      globe.width(window.innerWidth);
-      globe.height(window.innerHeight);
-    };
-    window.addEventListener("resize", resize);
-    resize();
-  });
+  // Ejecutar cuando el DOM esté listo
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGlobe);
+  } else {
+    initGlobe();
+  }
 </script>
