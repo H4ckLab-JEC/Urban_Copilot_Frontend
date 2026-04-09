@@ -1,0 +1,357 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+<Layout title="UCAI - Predicción de Afluencia">
+
+  <main
+    class="min-h-screen pt-24 px-6 mb-12 flex flex-col items-center relative z-10"
+  >
+    <div
+      class="max-w-5xl w-full mx-auto backdrop-blur-md bg-slate-900/50 rounded-2xl border border-slate-700/50 shadow-2xl p-8 relative overflow-hidden"
+    >
+      <!-- Glow effect -->
+      <div class="absolute -top-32 -right-32 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
+      <div class="absolute -bottom-32 -left-32 w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px]"></div>
+
+      <header class="mb-8 md:mb-10 text-center relative z-10">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] md:text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+          </span>
+          IA de Redes Neuronales · Activa
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 relative mb-4">
+          <h1 class="titulo-copiloto text-4xl md:text-6xl font-extrabold tracking-tight leading-tight md:leading-none text-center">
+            Predicción de Afluencia
+          </h1>
+          <a
+          href="/"
+          class="w-full md:w-auto text-center px-6 py-2 bg-blue-900/40 hover:bg-blue-800/60 text-cyan-300 border border-blue-400/40 rounded-lg shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] transition-all duration-300 font-bold backdrop-blur-md"
+        >
+          Volver
+        </a>
+        </div>
+
+        <p class="text-slate-400 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+          Selecciona una <span class="text-sky-300 font-medium">estación</span> para predecir el nivel de ocupación en tiempo real.
+        </p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+        <!-- Formulario -->
+        <div class="space-y-6 bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 flex flex-col">
+          <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-blue-300 mb-2">Sistema y Línea</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="select-sistema" class="bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-500 transition-all font-['Outfit'] lg:text-sm">
+                        <option value="metro">Metro</option>
+                        <option value="metrobus">Metrobús</option>
+                        <option value="cablebus">Cablebús</option>
+                        <option value="trolebus">Trolebús</option>
+                        <option value="rtp">RTP</option>
+                        <option value="tren_ligero">Tren Ligero</option>
+                        <option value="ecobici">Ecobici</option>
+                    </select>
+                    <input type="text" id="input-linea" placeholder="Línea 1" class="bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-500 transition-all font-['Outfit']" />
+                </div>
+            </div>
+            
+            <div class="relative">
+                <label for="input-estacion" class="block text-sm font-medium text-blue-300 mb-2">Estación</label>
+                <input
+                    type="text"
+                    id="input-estacion"
+                    autocomplete="off"
+                    placeholder="Ej. Pantitlán"
+                    class="w-full bg-slate-900/80 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-['Outfit']"
+                />
+                <ul id="autocomplete-list" class="autocomplete-list hidden"></ul>
+            </div>
+          </div>
+
+          <div class="mt-auto pt-6">
+              <button
+                id="btn-predecir"
+                class="w-full px-6 py-4 rounded-lg bg-blue-500 hover:bg-blue-400 text-white font-bold transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Obtener Nivel de Ocupación</span>
+              </button>
+          </div>
+        </div>
+
+        <!-- Panel de Resultados -->
+        <div
+          id="resultado-panel"
+          class="bg-slate-800/30 p-8 rounded-xl border border-slate-700/30 flex flex-col items-center justify-center text-center transition-all duration-500 min-h-[350px] relative overflow-hidden"
+        >
+          <div id="resultado-placeholder" class="flex flex-col items-center">
+            <div class="w-20 h-20 bg-slate-700/30 rounded-full flex items-center justify-center mb-4 border border-slate-600/30">
+                <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <p class="text-slate-400 max-w-[200px]">Selecciona una estación para ver la predicción de carga.</p>
+          </div>
+
+          <div id="resultado-content" class="hidden w-full space-y-6">
+            <div class="relative w-40 h-40 mx-auto">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="10" fill="transparent" class="text-slate-700" />
+                    <circle id="gauge-circle" cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="text-cyan-500 transition-all duration-1000" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span id="out-percentage" class="text-4xl font-black text-white">0%</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Ocupación</span>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <h3 id="out-label" class="text-2xl font-bold text-cyan-300">--</h3>
+                <p id="out-station" class="text-slate-400 text-sm italic">--</p>
+                <div id="hub-badge" class="hidden mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.3 1.047a1 1 0 01.974 0l7 4A1 1 0 0119 5.894v8.212a1 1 0 01-.726.961l-7 4A1 1 0 0110 18v-2.124l-6.274-3.585A1 1 0 013 11.43V3.57a1 1 0 01.726-.96l7-4zM11 3.51V11h6.274L11 3.51zM11 13v4.49l6.274-3.585L11 13zm-2 2.49V13l-6.274-3.585L9 15.49zm0-4.49V3.51L2.726 11h6.274z" clip-rule="evenodd" />
+                    </svg>
+                    Punto de Alta Concurrencia (Hub)
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 pt-4">
+                <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Confianza</p>
+                    <p id="out-confidence" class="text-lg font-bold text-indigo-400">--</p>
+                </div>
+                <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Tendencia</p>
+                    <p id="out-trend" class="text-lg font-bold text-emerald-400">Estable</p>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contenedor del Mapa -->
+      <div id="wrapper-mapa" class="mt-8 relative z-10 w-full h-[250px] md:h-[350px] rounded-xl overflow-hidden border border-slate-700/50 shadow-md">
+         <div id="route-map" class="w-full h-full z-0"></div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .titulo-copiloto {
+    background: linear-gradient(to right, #93c5fd, #a5f3fc, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .autocomplete-list {
+    position: absolute; top:100%; left:0; width:100%; max-height:250px;
+    background:#0f172a; border:1px solid #334155; border-radius:0.5rem;
+    overflow-y:auto; z-index:50; margin-top:0.5rem;
+  }
+  .autocomplete-item {
+    padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid #1e293b;
+    color:#cbd5e1; font-size:0.875rem; display:flex; justify-content:space-between;
+  }
+  .autocomplete-item:hover { background:#1e293b; color:#38bdf8; }
+  .autocomplete-item .badge { font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); }
+  .custom-tooltip {
+    background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.5);
+    color:white; padding:4px 8px; border-radius:4px; font-size:12px;
+  }
+</style>
+
+<link rel="stylesheet" href="/leaflet.css" />
+<script is:inline src="/leaflet.js"></script>
+
+<script is:inline>
+var currentStationData = null;
+
+function renderStationOnMap(station) {
+  if (typeof L === 'undefined') return;
+  if (!window.routeMap) {
+    window.routeMap = L.map('route-map', { zoomControl: false }).setView([19.4326, -99.1332], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(window.routeMap);
+    window.markerLayer = L.layerGroup().addTo(window.routeMap);
+  }
+  window.markerLayer.clearLayers();
+  if (station && station.coords) {
+    var sistema = document.getElementById("select-sistema").value;
+    var colors = { metro: '#f97316', metrobus: '#ef4444', cablebus: '#38bdf8', trolebus: '#22c55e', rtp: '#10b981', tren_ligero: '#3b82f6', ecobici: '#eab308' };
+    var color = colors[sistema] || '#38bdf8';
+    
+    // SVGs para Logotipos de CDMX
+    var svgLogos = {
+      metro: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v8H8V8zm2 2v4h4v-4h-4z"/></svg>', // Estilo Metro
+      metrobus: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M4 16h16v2H4v-2zm0-8h16v6H4V8zm2 2v2h4v-2H6zm8 0v2h4v-2h-4zM4 6h16v1h-16V6z"/></svg>', // Estilo Bus
+      cablebus: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M5 10l7-7 7 7v10H5V10zm2 1v8h10v-8l-5-5-5 5zM12 13a2 2 0 100 4 2 2 0 000-4z"/></svg>', // Estilo Cabina
+      rtp: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M17 17h2v2h-2v-2zm-14-3h16v3H3v-3zm0-4h16v3H3v-3zm0-4h16v3H3V6z"/></svg>',
+      trolebus: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M12 2L4.5 9H6v11h12V9h1.5L12 2zm-4 9h8v7H8v-7z"/></svg>',
+      tren_ligero: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M4 11h16v5H4v-5zm0-4h16v3H4V7zm0-4h16v3H4V3z"/></svg>',
+      ecobici: '<svg viewBox="0 0 24 24" fill="white" class="w-6 h-6"><path d="M15.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM5 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5zm13.5-8.5c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5zM22 9h-4.8l-2.1-3.4c-.3-.5-.9-.8-1.5-.8h-3.4c-.6 0-1.1.3-1.4.8L6.5 13.1l1.4 1.4 2.1-3.5H19l1 3h1.9L22 9z"/></svg>'
+    };
+
+    var logo = svgLogos[sistema] || svgLogos.metro;
+    
+    // Crear Icono Estilizado con LOGO
+    var stationIcon = L.divIcon({
+      className: 'custom-station-icon',
+      html: '<div style="background:'+color+'; width:42px; height:42px; border:3px solid white; display:flex; align-items:center; justify-content:center; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">' +
+            logo +
+            '</div>',
+      iconSize: [42, 42],
+      iconAnchor: [21, 21],
+      tooltipAnchor: [0, -25]
+    });
+
+    window.routeMap.flyTo(station.coords, 15);
+    L.marker(station.coords, { icon: stationIcon })
+      .bindTooltip("<strong>" + station.name + "</strong>", { permanent:true, direction:'top', className:'custom-tooltip' })
+      .addTo(window.markerLayer);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    var btn = document.getElementById("btn-predecir");
+    var inEst = document.getElementById("input-estacion");
+    var inLin = document.getElementById("input-linea");
+    var selSis = document.getElementById("select-sistema");
+    var panel = document.getElementById("resultado-panel");
+    var ph = document.getElementById("resultado-placeholder");
+    var content = document.getElementById("resultado-content");
+    var gauge = document.getElementById("gauge-circle");
+    
+    var outPerc = document.getElementById("out-percentage");
+    var outLab = document.getElementById("out-label");
+    var outSta = document.getElementById("out-station");
+    var outConf = document.getElementById("out-confidence");
+    var hubBadge = document.getElementById("hub-badge");
+
+    renderStationOnMap(null);
+
+    btn.addEventListener("click", function () {
+      var station = inEst.value.trim();
+      var line = inLin.value.trim();
+      var sistema = selSis.value;
+
+      if (!station) { alert("Por favor selecciona una estación primero."); return; }
+
+      // Feedback Visual: Botón Cargando
+      var originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Analizando red...';
+      panel.style.opacity = "0.6";
+
+      // VALIDACIÓN: Comprobar que la estación existe en la red antes de consultar al modelo
+      fetch("/data/" + sistema + "_stations_normalized.geojson")
+      .then(function(r) { return r.json(); })
+      .then(function(gj) {
+          var isValid = gj.features.some(function(f) {
+              var p = f.properties;
+              var n = (p.NOMBRE || p.nombre || p.Name || p.INSTERSECC || p.ORIG_DEST || p.STATION || p.label || "").toLowerCase();
+              return n === station.toLowerCase();
+          });
+
+          if (!isValid) {
+              alert("⚠️ La estación '" + station + "' no existe métricamente en la red de " + sistema.toUpperCase() + ". Utiliza las opciones del autocompletado.");
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+              panel.style.opacity = "1";
+              return; // Termina la ejecución silenciosamente
+          }
+
+          // Si es válida, lanzar la ejecución de IA
+          fetch("/api/v1/occupancy/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transport_type: sistema, line: line, station: station })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var p = data.prediction;
+            ph.classList.add("hidden");
+            content.classList.remove("hidden");
+            panel.style.opacity = "1";
+
+            outPerc.textContent = p.occupancy_percentage + "%";
+            outLab.textContent = p.label;
+            outSta.textContent = sistema.toUpperCase() + " • " + (line || "Línea") + " • " + p.station;
+            outConf.textContent = p.prediction_confidence + "%";
+            
+            if (p.is_hub) hubBadge.classList.remove("hidden");
+            else hubBadge.classList.add("hidden");
+
+            var offset = 440 - (440 * p.occupancy_percentage) / 100;
+            gauge.style.strokeDashoffset = offset;
+            if (p.occupancy_percentage > 80) { gauge.style.stroke = "#ef4444"; outPerc.style.color = "#ef4444"; }
+            else if (p.occupancy_percentage > 50) { gauge.style.stroke = "#f59e0b"; outPerc.style.color = "#f59e0b"; }
+            else { gauge.style.stroke = "#06b6d4"; outPerc.style.color = "#06b6d4"; }
+
+            if (currentStationData) renderStationOnMap(currentStationData);
+          })
+          .catch(function(e) { 
+            console.error(e);
+            alert("Error al conectar con el motor de IA. Revisa que el backend esté activo.");
+          })
+          .finally(function() { 
+            btn.disabled = false; 
+            btn.innerHTML = originalText;
+            panel.style.opacity = "1";
+          });
+      });
+    });
+
+    // Autocomplete logic
+    var acList = document.getElementById("autocomplete-list");
+    inEst.addEventListener("input", function() {
+        var query = this.value.trim().toLowerCase();
+        if (query.length < 2) { acList.classList.add("hidden"); return; }
+        
+        fetch("/data/" + selSis.value + "_stations_normalized.geojson")
+        .then(function(r) { return r.json(); })
+        .then(function(gj) {
+            var matches = gj.features.filter(function(f) {
+                var p = f.properties;
+                var n = (p.NOMBRE || p.nombre || p.Name || p.INSTERSECC || p.ORIG_DEST || p.STATION || p.label || "").toLowerCase();
+                return n.indexOf(query) !== -1;
+            }).slice(0, 8);
+
+            if (matches.length > 0) {
+                acList.innerHTML = matches.map(function(f) {
+                    var p = f.properties;
+                    var n = p.NOMBRE || p.nombre || p.Name || p.INSTERSECC || p.ORIG_DEST || p.STATION || p.label || "Sin nombre";
+                    var l = p.LINEA || p.linea || p.Line || p.RUTA || p.ruta || p.route || "-";
+                    var c = JSON.stringify(f.geometry.coordinates);
+                    return '<li class="autocomplete-item" data-name="'+n+'" data-line="'+l+'" data-coords=\''+c+'\'>' +
+                           '<span>'+n+'</span><span class="badge">'+ (l !== "-" ? "R " + l : "") +'</span></li>';
+                }).join("");
+                acList.classList.remove("hidden");
+            } else { acList.classList.add("hidden"); }
+        });
+    });
+
+    acList.addEventListener("click", function(e) {
+        var item = e.target.closest(".autocomplete-item");
+        if (!item) return;
+        var coords = JSON.parse(item.dataset.coords);
+        inEst.value = item.dataset.name;
+        inLin.value = "Línea " + item.dataset.line;
+        currentStationData = { name: item.dataset.name, coords: [coords[1], coords[0]] };
+        acList.classList.add("hidden");
+        renderStationOnMap(currentStationData);
+        setTimeout(function() { btn.click(); }, 100);
+    });
+
+    document.addEventListener("click", function(e) {
+        if (!inEst.contains(e.target)) acList.classList.add("hidden");
+    });
+});
+</script>

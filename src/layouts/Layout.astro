@@ -1,0 +1,68 @@
+---
+export interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | Urban Copilot AI</title>
+    <!-- Import Outfit font for modern AI look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <slot name="head" />
+    <style is:global>
+      :root {
+        --color-bg: #030712; /* Deep Navy */
+        --color-surface: #0a1329;
+        --color-primary: #38bdf8; /* Light blue / Neon */
+        --color-primary-glow: rgba(56, 189, 248, 0.5);
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Outfit', sans-serif;
+        background-color: var(--color-bg);
+        color: #e2e8f0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #030712; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1e3a8a; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #38bdf8; 
+      }
+    </style>
+    <slot name="head" />
+  </head>
+  <body class="bg-gradient-to-b from-[#030712] via-[#0a1329] to-[#030712] min-h-screen text-slate-200">
+    <!-- Ambient glowing backgrounds orb -->
+    <div class="pointer-events-none fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px]"></div>
+    <div class="pointer-events-none fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-400/10 blur-[100px]"></div>
+    
+    <div class="relative z-10">
+      <slot />
+    </div>
+  </body>
+</html>

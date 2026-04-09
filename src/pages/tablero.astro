@@ -1,0 +1,870 @@
+---
+import Layout from "../layouts/Layout.astro";
+import DashboardHeader from "../components/DashboardHeader.astro";
+import ToolsPanel from "../components/ToolsPanel.astro";
+import AlertsPanel from "../components/AlertsPanel.astro";
+
+const transports = [
+  {
+    id: "metro",
+    name: "Metro",
+    color: "#f97316",
+    hexBorder: "border-orange-500",
+    hexBg: "bg-orange-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "metrobus",
+    name: "Metrobús",
+    color: "#ef4444",
+    hexBorder: "border-red-500",
+    hexBg: "bg-red-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "cablebus",
+    name: "Cablebús",
+    color: "#06b6d4",
+    hexBorder: "border-cyan-500",
+    hexBg: "bg-cyan-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "trolebus",
+    name: "Trolebús",
+    color: "#3b82f6",
+    hexBorder: "border-blue-500",
+    hexBg: "bg-blue-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "tren_ligero",
+    name: "Tren Ligero",
+    color: "#a855f7",
+    hexBorder: "border-purple-500",
+    hexBg: "bg-purple-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "rtp",
+    name: "RTP",
+    color: "#10b981",
+    hexBorder: "border-emerald-500",
+    hexBg: "bg-emerald-500",
+    lines: true,
+    stations: true,
+  },
+  {
+    id: "ecobici",
+    name: "Ecobici",
+    color: "#84cc16",
+    hexBorder: "border-lime-500",
+    hexBg: "bg-lime-500",
+    lines: false,
+    stations: true,
+  },
+];
+---
+
+<Layout title="Tablero de Movilidad - Urban Copilot">
+  <main
+    class="relative h-screen w-full flex flex-col bg-slate-950 overflow-hidden"
+  >
+    <!-- Mapa Maestro (Fondo) -->
+    <div id="master-map" class="absolute inset-0 z-0"></div>
+
+    <DashboardHeader />
+
+    <!-- Network Focus Reset Chip -->
+    <div
+      id="focus-reset-chip"
+      class="hidden absolute top-32 left-1/2 -translate-x-1/2 z-[60] animate-fadeIn pointer-events-none"
+    >
+      <button
+        class="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-rose-600/90 backdrop-blur-md rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-2xl border border-white/20 hover:scale-105 transition-all"
+      >
+        <span>✕ Restablecer Red Global</span>
+      </button>
+    </div>
+
+    <!-- Floating Toggle Button -->
+    <button
+      id="menu-toggle"
+      class="absolute top-20 left-4 md:top-24 md:left-6 z-[60] p-3 md:p-4 bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 rounded-xl md:rounded-2xl text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:scale-105 active:scale-95 transition-all pointer-events-auto"
+    >
+      <svg
+        id="toggle-icon-open"
+        class="w-5 h-5 md:w-6 md:h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16m-7 6h7"></path></svg
+      >
+      <svg
+        id="toggle-icon-close"
+        class="w-5 h-5 md:w-6 md:h-6 hidden"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"></path></svg
+      >
+    </button>
+
+    <ToolsPanel transports={transports} />
+
+    <AlertsPanel />
+  </main>
+</Layout>
+
+<script is:inline src="/leaflet.js"></script>
+<link rel="stylesheet" href="/leaflet.css" />
+
+<script is:inline>
+  document.addEventListener("DOMContentLoaded", () => {
+    // === CONFIGURACIÓN BASE DEL MAPA ===
+    const map = L.map("master-map", {
+      zoomControl: false,
+      attributionControl: false,
+    }).setView([19.4326, -99.1332], 12);
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    ).addTo(map);
+    const mainLayerGroup = L.layerGroup().addTo(map);
+    const reportsLayer = L.layerGroup().addTo(map); // Nueva capa para incidentes visuales
+    const transportLayers = {};
+    let allStationsData = []; // Para búsqueda cruzada reportes <-> estaciones
+    // === LÓGICA DE TABS ===
+    const tabs = ["predict", "layers"];
+    tabs.forEach((tabId) => {
+      document
+        .getElementById(`tab-btn-${tabId}`)
+        .addEventListener("click", () => {
+          tabs.forEach((t) => {
+            const b = document.getElementById(`tab-btn-${t}`);
+            b.classList.remove("bg-blue-600/20", "text-white");
+            b.classList.add("text-slate-500");
+            document.getElementById(`pane-${t}`).classList.add("hidden");
+          });
+          const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+          activeBtn.classList.add("bg-blue-600/20", "text-white");
+          activeBtn.classList.remove("text-slate-500");
+          document.getElementById(`pane-${tabId}`).classList.remove("hidden");
+        });
+    });
+
+    // === LÓGICA DE CAPAS (MONITOR EXCLUSIVO) ===
+    const layerButtons = document.querySelectorAll(".layer-toggle");
+
+    // Función para apagar todas las capas
+    const deactivateAllLayers = () => {
+      Object.entries(transportLayers).forEach(([id, layerGroup]) => {
+        map.removeLayer(layerGroup);
+        const btn = document.querySelector(
+          `.layer-toggle[data-transport="${id}"]`,
+        );
+        if (btn) {
+          btn.classList.remove("bg-slate-700/60", "border-amber-500/40");
+          const dot = btn.querySelector(".indicator-dot");
+          dot.style.opacity = "0.4";
+          dot.style.boxShadow = "none";
+          // Reset del ojo
+          const eye = btn.querySelector(".status-icon");
+          if (eye) eye.classList.replace("text-amber-400", "text-slate-600");
+        }
+      });
+    };
+
+    layerButtons.forEach((btn) => {
+      const id = btn.dataset.transport;
+      const color = btn.dataset.color;
+      const hasLines = btn.dataset.lines === "true";
+      const hasStations = btn.dataset.stations === "true";
+      const layerGroup = L.layerGroup();
+      transportLayers[id] = layerGroup;
+
+      const toggleLayer = (forceActive = null) => {
+        const currentlyActive = map.hasLayer(layerGroup);
+        const nextState = forceActive !== null ? forceActive : !currentlyActive;
+        const eye = btn.querySelector(".status-icon");
+
+        if (nextState) {
+          deactivateAllLayers();
+          map.addLayer(layerGroup);
+          btn.classList.add("bg-slate-700/60", "border-amber-500/40");
+          btn.querySelector(".indicator-dot").style.opacity = "1";
+          btn.querySelector(".indicator-dot").style.boxShadow =
+            `0 0 10px ${color}`;
+          if (eye) eye.classList.replace("text-slate-600", "text-amber-400");
+        } else {
+          map.removeLayer(layerGroup);
+          btn.classList.remove("bg-slate-700/60", "border-amber-500/40");
+          btn.querySelector(".indicator-dot").style.opacity = "0.4";
+          btn.querySelector(".indicator-dot").style.boxShadow = "none";
+          if (eye) eye.classList.replace("text-amber-400", "text-slate-600");
+        }
+      };
+
+      const metroColors = {
+        "1": "#F54A91",
+        "2": "#0055A5",
+        "3": "#B0A32A",
+        "4": "#68BCA2",
+        "5": "#FBD100",
+        "6": "#DA291C",
+        "7": "#E36B2C",
+        "8": "#00A94F",
+        "9": "#56382D",
+        A: "#8D2587",
+        B: "#007460",
+        "12": "#B69E52",
+      };
+      const metrobusColors = {
+        "1": "#B72025",
+        "2": "#862B88",
+        "3": "#75BF2A",
+        "4": "#E17719",
+        "5": "#00366D",
+        "6": "#CA2973",
+        "7": "#008149",
+      };
+
+      const getFeatureColor = (feature) => {
+        let featureColor = color;
+        if (id === "metro" && feature.properties && feature.properties.LINEA) {
+          let ln = feature.properties.LINEA.toString().toUpperCase();
+          if (ln.startsWith("0")) ln = ln.substring(1);
+          featureColor = metroColors[ln] || color;
+        } else if (
+          id === "metrobus" &&
+          feature.properties &&
+          feature.properties.LINEA
+        ) {
+          let ln = feature.properties.LINEA.toString().toUpperCase();
+          if (ln.startsWith("0")) ln = ln.substring(1);
+          featureColor = metrobusColors[ln] || color;
+        }
+        return featureColor;
+      };
+
+      const loadData = (type) => {
+        fetch(`/data/${id}_${type}_normalized.geojson`)
+          .then((r) => r.json())
+          .then((gj) => {
+            if (type === "stations") {
+              // Guardar estaciones para match con reportes
+              gj.features.forEach((f) => {
+                let stName = f.properties.NOMBRE || f.properties.nombre || f.properties.STATION || "";
+                if (id === "rtp") stName = f.properties.INSTERSECC || "";
+                if (id === "ecobici") stName = `${f.properties.calle_prin} y ${f.properties.calle_secu}`;
+
+                allStationsData.push({
+                  name: stName.toLowerCase(),
+                  lat: f.geometry.coordinates[1],
+                  lng: f.geometry.coordinates[0],
+                  system: id,
+                });
+              });
+            }
+
+            const geojsonLayer = L.geoJSON(gj, {
+              style:
+                type === "lines"
+                  ? (f) => ({
+                      color: getFeatureColor(f),
+                      weight: 4,
+                      opacity: 0.8,
+                      lineId: f.properties.LINEA || f.properties.RUTA,
+                    })
+                  : null,
+              pointToLayer:
+                type === "stations"
+                  ? (f, ll) => {
+                      const stColor = getFeatureColor(f);
+                      let name = f.properties.NOMBRE || f.properties.nombre || f.properties.STATION || "";
+                      if (id === "rtp") name = f.properties.INSTERSECC || "";
+                      if (id === "ecobici") name = `${f.properties.calle_prin} y ${f.properties.calle_secu}`;
+
+                      const lineId =
+                        f.properties.LINEA ||
+                        f.properties.linea ||
+                        f.properties.RUTA;
+                      const m = L.circleMarker(ll, {
+                        radius: 4,
+                        fillColor: stColor,
+                        color: "#fff",
+                        weight: 1,
+                        fillOpacity: 0.9,
+                        lineId: lineId,
+                      });
+
+                      m.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        if (lineId) activateFocusMode(lineId);
+                      });
+
+                      if (name)
+                        m.bindTooltip(name, {
+                          direction: "top",
+                          className: "custom-tooltip",
+                          offset: [0, -5],
+                        });
+                      return m;
+                    }
+                  : null,
+            }).addTo(layerGroup);
+          })
+          .catch(() => {});
+      };
+      if (hasLines) loadData("lines");
+      if (hasStations) loadData("stations");
+
+      btn.addEventListener("click", () => {
+        toggleLayer();
+      });
+    });
+
+    // Activar Metro por defecto una vez registradas todas
+    setTimeout(() => {
+      const metroBtn = document.querySelector(
+        '.layer-toggle[data-transport="metro"]',
+      );
+      if (metroBtn) metroBtn.click();
+    }, 500);
+
+    // === FOCUS MODE LOGIC ===
+    const focusResetChip = document.getElementById("focus-reset-chip");
+
+    const activateFocusMode = (lineId) => {
+      // Normalizar ID de línea (ej: "01" -> "1") para asegurar match entre estaciones y líneas
+      const normalize = (val) => {
+        if (!val) return "";
+        const v = val.toString().trim().toUpperCase();
+        // Intenta convertir a número para quitar ceros a la izquierda, si no es número, usa el string
+        const num = parseInt(v, 10);
+        return isNaN(num) ? v : num.toString();
+      };
+
+      const lineStr = normalize(lineId);
+      focusResetChip.classList.remove("hidden");
+
+      Object.values(transportLayers).forEach((layerGroup) => {
+        layerGroup.getLayers().forEach((gjLayer) => {
+          gjLayer.eachLayer((layer) => {
+            const featProps = layer.feature?.properties || {};
+            const rawLId =
+              layer.options.lineId ||
+              featProps.LINEA ||
+              featProps.linea ||
+              featProps.RUTA ||
+              "";
+            const lId = normalize(rawLId);
+
+            if (lId !== "" && lId === lineStr) {
+              // ELEMENTO SELECCIONADO (Línea o Estación)
+              if (layer.setStyle)
+                layer.setStyle({ opacity: 1, fillOpacity: 0.9, weight: 6 });
+              else if (layer.setOpacity) layer.setOpacity(1);
+              if (layer.bringToFront) layer.bringToFront();
+            } else if (lId !== "") {
+              // ELEMENTO NO SELECCIONADO
+              if (layer.setStyle)
+                layer.setStyle({ opacity: 0.05, fillOpacity: 0.05 });
+              else if (layer.setOpacity) layer.setOpacity(0.05);
+            }
+          });
+        });
+      });
+    };
+
+    focusResetChip.addEventListener("click", () => {
+      focusResetChip.classList.add("hidden");
+      Object.entries(transportLayers).forEach(([id, layerGroup]) => {
+        layerGroup.getLayers().forEach((gjLayer) => {
+          gjLayer.eachLayer((layer) => {
+            // Restaurar estilos base
+            if (layer.setStyle)
+              layer.setStyle({ opacity: 0.8, fillOpacity: 0.9, weight: 4 });
+            else if (layer.setOpacity) layer.setOpacity(1);
+          });
+        });
+      });
+    });
+    let currentPolyline = null;
+
+    // === LÓGICA DE AFLUENCIA (IA PRED) ===
+    const btnPredict = document.getElementById("btn-run-predict");
+    const inStation = document.getElementById("in-predict-station");
+
+    btnPredict.addEventListener("click", async () => {
+      const station = inStation.value.trim();
+      const sistema = document.getElementById("sel-predict-system").value;
+      const inputLinea = document.getElementById("in-predict-line");
+      const line = inputLinea.value.replace("Línea ", "");
+
+      if (!station) return alert("Selecciona una estación");
+      btnPredict.textContent = "Analizando...";
+      btnPredict.disabled = true;
+
+      try {
+        const gjRes = await fetch(
+          `/data/${sistema}_stations_normalized.geojson`,
+        );
+        const gj = await gjRes.json();
+        const isValid = gj.features.some((f) => {
+          const p = f.properties;
+          const n = (
+            p.NOMBRE ||
+            p.nombre ||
+            p.Name ||
+            p.INSTERSECC ||
+            p.ORIG_DEST ||
+            p.STATION ||
+            p.label ||
+            ""
+          ).toLowerCase();
+          return n === station.toLowerCase();
+        });
+
+        if (!isValid) {
+          alert(
+            `⚠️ La estación '${station}' no existe en la red de ${sistema.toUpperCase()}. Usa el autocompletado.`,
+          );
+          return;
+        }
+
+        const res = await fetch("/api/v1/occupancy/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transport_type: sistema,
+            station: station,
+            line: line,
+          }),
+        });
+        const data = await res.json();
+        const p = data.prediction;
+
+        document
+          .getElementById("predict-result-box")
+          .classList.remove("hidden");
+        const gauge = document.getElementById("gauge-circle");
+        const percText = document.getElementById("out-perc");
+        const labelText = document.getElementById("out-label");
+
+        percText.textContent = p.occupancy_percentage + "%";
+        labelText.textContent = p.label;
+        document.getElementById("out-sys").textContent = station;
+        const offset = 264 - (264 * p.occupancy_percentage) / 100;
+        gauge.style.strokeDashoffset = offset;
+
+        let color = "#06b6d4";
+        if (p.occupancy_percentage > 80) color = "#ef4444";
+        else if (p.occupancy_percentage > 50) color = "#f59e0b";
+
+        gauge.style.stroke = color;
+        percText.style.color = color;
+        labelText.style.color = color;
+      } catch (e) {
+        console.error(e);
+        alert("Error al conectar con la IA.");
+      } finally {
+        btnPredict.textContent = "Analizar Ocupación";
+        btnPredict.disabled = false;
+      }
+    });
+
+    // === AUTOCOMPLETE (PREDICT) ===
+    const acList = document.getElementById("autocomplete-list");
+    inStation.addEventListener("input", async () => {
+      const q = inStation.value.toLowerCase();
+      if (q.length < 2) return acList.classList.add("hidden");
+      const res = await fetch(
+        `/data/${document.getElementById("sel-predict-system").value}_stations_normalized.geojson`,
+      );
+      const gj = await res.json();
+      const matches = gj.features
+        .filter((f) =>
+          (f.properties.NOMBRE || f.properties.nombre || "")
+            .toLowerCase()
+            .includes(q),
+        )
+        .slice(0, 5);
+
+      if (matches.length) {
+        acList.innerHTML = matches
+          .map(
+            (m) =>
+              `<li class="p-2 text-[10px] text-white hover:bg-slate-800 cursor-pointer border-b border-white/5">${m.properties.NOMBRE || m.properties.nombre}</li>`,
+          )
+          .join("");
+        acList.classList.remove("hidden");
+        acList.querySelectorAll("li").forEach(
+          (li, idx) =>
+            (li.onclick = () => {
+              const match = matches[idx];
+              inStation.value =
+                match.properties.NOMBRE || match.properties.nombre;
+              const line =
+                match.properties.LINEA ||
+                match.properties.linea ||
+                match.properties.Line ||
+                match.properties.RUTA ||
+                "";
+              document.getElementById("in-predict-line").value = line
+                ? "Línea " + line
+                : "";
+              acList.classList.add("hidden");
+            }),
+        );
+      }
+    });
+
+    // === REPORTES (ALERTS & MAP VIZ) ===
+    const categoryColors = {
+      Accidente: "#ef4444",
+      Bloqueo: "#f43f5e",
+      Manifestación: "#f59e0b",
+      Obras: "#3b82f6",
+      "Falla Técnica": "#8b5cf6",
+      Otro: "#64748b",
+    };
+
+    const loadReports = async () => {
+      const res = await fetch("/api/v1/reports");
+      const data = await res.json();
+      const container = document.getElementById("side-alerts-box");
+      const badge = document.getElementById("alerts-badge");
+      const toggleBtn = document.getElementById("alerts-toggle");
+
+      reportsLayer.clearLayers();
+
+      if (data.length > 0) {
+        badge.textContent = data.length > 9 ? "9+" : data.length;
+        badge.classList.remove("hidden");
+        toggleBtn.classList.add("animate-pulse");
+
+        data.forEach((report) => {
+          const reportType = report.type || report.category || "Otro";
+          const reportColor = categoryColors[reportType] || "#f43f5e";
+          const stName = report.station || report.location || "Ubicación desconocida";
+          
+          let lat = report.latitude;
+          let lng = report.longitude;
+
+          if (!lat || !lng) {
+            const locMatch = stName.toLowerCase();
+            const found = allStationsData.find(
+              (s) => locMatch.includes(s.name) || s.name.includes(locMatch),
+            );
+            if (found) { lat = found.lat; lng = found.lng; }
+          }
+
+          if (lat && lng) {
+            const incidentMarker = L.circleMarker([lat, lng], {
+              radius: 10,
+              fillColor: reportColor,
+              color: "#fff",
+              weight: 2,
+              fillOpacity: 0.8,
+              className: "incident-pulse",
+            }).addTo(reportsLayer);
+
+            incidentMarker.reportId = report.id;
+            
+            // Tooltip rápido (al pasar el mouse)
+            incidentMarker.bindTooltip(
+              `
+                 <div class="p-1 border-l-2 pl-2" style="border-color: ${reportColor}">
+                    <div class="text-[9px] font-black uppercase tracking-widest" style="color: ${reportColor}">${reportType}</div>
+                    <div class="text-[11px] font-bold text-white leading-tight mt-0.5">${stName}</div>
+                    <div class="text-[7px] text-slate-500 mt-1 italic">Vía reporte ciudadano • ${report.time}</div>
+                 </div>
+              `,
+              {
+                direction: "top",
+                className: "custom-tooltip",
+                permanent: false,
+              },
+            );
+
+            incidentMarker.bindPopup(`
+                <div class="p-3 bg-slate-900 text-white rounded-lg border border-slate-700 min-w-[200px]">
+                   <div class="flex items-center gap-2 mb-2">
+                      <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter" style="background: ${reportColor}30; color: ${reportColor}">
+                         ${reportType}
+                      </span>
+                      <span class="text-[9px] text-slate-500 font-mono italic ml-auto">${report.time}</span>
+                   </div>
+                   <div class="text-[12px] font-bold text-emerald-400 leading-tight mb-1">
+                      ${stName}
+                   </div>
+                   <div class="mt-1 text-[8px] text-slate-500 uppercase font-bold tracking-widest border-t border-slate-800 pt-2">
+                      Sistema: ${report.system || "No especificado"}
+                   </div>
+                </div>
+            `, {
+              className: 'custom-popup',
+              maxWidth: 300
+            });
+          }
+        });
+      }
+
+      container.innerHTML =
+        data
+          .slice()
+          .reverse()
+          .map((r) => {
+            const reportType = r.type || r.category || "Otro";
+            const reportColor = categoryColors[reportType] || "#f43f5e";
+            const stName = r.station || r.location || "Ubicación desconocida";
+            
+            let lat = r.latitude;
+            let lng = r.longitude;
+
+            if (!lat || !lng) {
+              const locMatch = stName.toLowerCase();
+              const found = allStationsData.find(
+                (s) => locMatch.includes(s.name) || s.name.includes(locMatch),
+              );
+              if (found) { lat = found.lat; lng = found.lng; }
+            }
+
+            // Icono dinámico según categoría
+            let icon = '🔔';
+            if (reportType === 'Accidente') icon = '⚠️';
+            if (reportType === 'Bloqueo') icon = '🚫';
+            if (reportType === 'Manifestación') icon = '📢';
+            if (reportType === 'Obras') icon = '🚧';
+            if (reportType === 'Falla Técnica') icon = '🔧';
+
+            return `
+          <div 
+            class="report-card p-3 bg-white/5 border-l-4 rounded-r-2xl hover:bg-white/10 transition-all cursor-pointer group mb-2 border-transparent relative overflow-hidden active:scale-95"
+            style="border-left-color: ${reportColor}"
+            data-lat="${lat || ""}" 
+            data-lng="${lng || ""}"
+            data-id="${r.id}"
+          >
+            <!-- Efecto de brillo sutil -->
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            
+            <div class="flex items-start gap-3 relative z-10">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-inner" style="background: ${reportColor}25; color: ${reportColor}">
+                ${icon}
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start">
+                  <span class="text-[9px] font-black uppercase tracking-widest" style="color: ${reportColor}">
+                    ${reportType}
+                  </span>
+                  <span class="text-[8px] text-slate-600 font-mono">${r.time}</span>
+                </div>
+                <h4 class="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight mt-0.5">
+                  ${stName}
+                </h4>
+                <div class="text-[9px] text-slate-500 mt-1 line-clamp-1 italic">
+                  ${r.system || "Transporte Público"} • Reporte Activo
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          })
+          .join("") ||
+        '<p class="text-[10px] text-slate-600 text-center py-4 italic">Sin alertas recientes</p>';
+
+      // Añadir eventos de click a las tarjetas
+      document.querySelectorAll(".report-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const lat = card.dataset.lat;
+          const lng = card.dataset.lng;
+          const rid = card.dataset.id;
+          if (lat && lng) {
+            // Volar a la ubicación
+            map.flyTo([lat, lng], 16, { duration: 1.5 });
+
+            // Abrir popup del reporte en el mapa
+            reportsLayer.eachLayer((m) => {
+              if (m.reportId === rid) m.openPopup();
+            });
+
+            // En móvil, cerrar el panel de alertas tras click para ver el mapa
+            if (window.innerWidth < 768) {
+              alertsPanel.classList.add("hidden");
+              alertsToggle.classList.remove("bg-rose-500/20");
+            }
+          }
+        });
+      });
+    };
+
+    const alertsToggle = document.getElementById("alerts-toggle");
+    const alertsPanel = document.getElementById("alerts-panel");
+    alertsToggle.addEventListener("click", () => {
+      const isOpeningAlerts = alertsPanel.classList.contains("hidden");
+      if (isOpeningAlerts) {
+        if (isPanelOpen) closeMenu();
+        alertsPanel.classList.remove("hidden");
+        alertsToggle.classList.add("bg-rose-500/20");
+        alertsToggle.classList.remove("animate-pulse");
+      } else {
+        alertsPanel.classList.add("hidden");
+        alertsToggle.classList.remove("bg-rose-500/20");
+      }
+    });
+    loadReports();
+    setInterval(loadReports, 10000);
+
+    // === TOGGLE PANEL LOGIC ===
+    const menuToggle = document.getElementById("menu-toggle");
+    const mainPanel = document.getElementById("main-panel");
+    const iconOpen = document.getElementById("toggle-icon-open");
+    const iconClose = document.getElementById("toggle-icon-close");
+    let isPanelOpen = false;
+
+    const closeMenu = () => {
+      isPanelOpen = false;
+      mainPanel.classList.add(
+        "translate-y-full",
+        "md:-translate-x-[120%]",
+        "opacity-0",
+      );
+      mainPanel.classList.remove(
+        "translate-y-0",
+        "md:translate-x-0",
+        "opacity-100",
+      );
+      iconOpen.classList.remove("hidden");
+      iconClose.classList.add("hidden");
+      menuToggle.classList.remove(
+        "md:left-[380px]",
+        "bg-rose-500/20",
+        "border-rose-500/50",
+        "text-rose-400",
+        "bottom-[72vh]",
+        "right-4",
+      );
+      if (window.innerWidth < 768) menuToggle.classList.add("top-20", "left-4");
+    };
+
+    const openMenu = () => {
+      if (!alertsPanel.classList.contains("hidden")) {
+        alertsPanel.classList.add("hidden");
+        alertsToggle.classList.remove("bg-rose-500/20");
+      }
+      isPanelOpen = true;
+      mainPanel.classList.remove(
+        "translate-y-full",
+        "md:-translate-x-[120%]",
+        "opacity-0",
+      );
+      mainPanel.classList.add(
+        "translate-y-0",
+        "md:translate-x-0",
+        "opacity-100",
+      );
+      iconOpen.classList.add("hidden");
+      iconClose.classList.remove("hidden");
+      menuToggle.classList.add(
+        "md:left-[380px]",
+        "bg-rose-500/20",
+        "border-rose-500/50",
+        "text-rose-400",
+      );
+      if (window.innerWidth < 768) {
+        menuToggle.classList.add("bottom-[72vh]", "right-4");
+        menuToggle.classList.remove("top-20", "left-4");
+      }
+    };
+
+    menuToggle.addEventListener("click", () => {
+      if (isPanelOpen) closeMenu();
+      else openMenu();
+    });
+  });
+</script>
+
+<style>
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
+  }
+  .animate-slideUp {
+    animation: slideUp 0.4s ease-out;
+  }
+  .animate-slideLeft {
+    animation: slideLeft 0.4s ease-out;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slideLeft {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .incident-pulse {
+    animation: marker-pulse 1.5s infinite;
+  }
+  @keyframes marker-pulse {
+    0% {
+      r: 10;
+      opacity: 1;
+      stroke-width: 2;
+    }
+    50% {
+      r: 15;
+      opacity: 0.5;
+      stroke-width: 1;
+    }
+    100% {
+      r: 20;
+      opacity: 0;
+      stroke-width: 0.5;
+    }
+  }
+
+  .custom-tooltip {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+  }
+</style>
